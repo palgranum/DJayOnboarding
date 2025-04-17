@@ -6,14 +6,25 @@
 //
 
 import UIKit
+import Combine
+
+public protocol OnboardingViewModelType {
+    func didTapButton()
+    var pageIndex: AnyPublisher<Int, Never> { get }
+    var buttonTitle: AnyPublisher<String, Never> { get }
+    var isButtonEnabled: AnyPublisher<Bool, Never> { get }
+}
 
 final public class OnboardingController: UIViewController {
-    private let button = UIButton(type: .system)
+    private let button = UIButton()
     private let gradientLayer = CAGradientLayer()
     private let pageIndicator = UIPageControl()
     private let navController = UINavigationController()
+    private let viewModel: OnboardingViewModelType
+    private var bag = Set<AnyCancellable>()
 
-    init() {
+    init(_ viewModel: OnboardingViewModelType) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
         view.directionalLayoutMargins.leading = 32
         view.directionalLayoutMargins.trailing = 32
@@ -36,6 +47,16 @@ final public class OnboardingController: UIViewController {
         view.addSubview(navController.view)
         navController.didMove(toParent: self)
         NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + navigatorConstraints)
+//        pageIndicator.addTarget(self, action: #selector(didChangePage), for: .valueChanged)
+        viewModel.pageIndex.assign(to: \.currentPage, on: pageIndicator).store(in: &bag)
+//        viewModel.isButtonEnabled.assign(to: \.isEnabled, on: button).store(in: &bag)
+        viewModel.isButtonEnabled.sink(receiveValue: { [button] in
+            button.alpha = $0 ? 1 : 0.3
+        }).store(in: &bag)
+        viewModel.buttonTitle.sink(receiveValue: { [button] in
+            button.setTitle($0, for: .normal)
+        }).store(in: &bag)
+        button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -43,6 +64,14 @@ final public class OnboardingController: UIViewController {
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradientLayer.frame = view.layer.bounds
+    }
+
+//    @objc private func didChangePage() {
+//        print("Page changed: \(pageIndicator.currentPage)")
+//    }
+
+    @objc private func didTapButton() {
+        viewModel.didTapButton()
     }
 }
 
