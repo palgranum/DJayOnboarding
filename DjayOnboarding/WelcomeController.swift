@@ -26,8 +26,9 @@ final class WelcomeController: UIViewController {
     private let tableView = UITableView()
     private var dataSource: UITableViewDiffableDataSource<Int, WelcomeTableItem>!
     private var token: AnyCancellable?
+    private let welcomeLabel = UILabel()
 
-    init(_ snaps: AnyPublisher<WelcomeTableSnap, Never>) {
+    init(_ snapshots: AnyPublisher<WelcomeTableSnap, Never>) {
         super.init(nibName: nil, bundle: nil)
         view.addSubview(tableView)
         tableView.backgroundColor = .clear
@@ -41,8 +42,25 @@ final class WelcomeController: UIViewController {
         }
         dataSource.defaultRowAnimation = .bottom
         var isAnimated = false
-        token = snaps.sink { [weak self] in
+        welcomeLabel.font = .systemFont(ofSize: 22, weight: .regular)
+        welcomeLabel.textColor = .white
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        paragraphStyle.minimumLineHeight = 22
+        paragraphStyle.maximumLineHeight = 22
+        let attributedText = NSAttributedString(
+            string: "Welcome to djay!",
+            attributes: [
+                .kern: 0.02 * 22, // 2% letter spacing = 0.44 points
+                .paragraphStyle: paragraphStyle
+            ]
+        )
+        welcomeLabel.attributedText = attributedText
+        welcomeLabel.textAlignment = .center
+        view.addSubview(welcomeLabel)
+        token = snapshots.sink { [weak self] in
             self?.dataSource?.apply($0, animatingDifferences: isAnimated)
+            self?.updateWelcomeLabel($0.itemIdentifiers.count > 1, isAnimated: isAnimated)
             self?.updateContentOffset(isAnimated)
             isAnimated = true
         }
@@ -53,7 +71,8 @@ final class WelcomeController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         tableView.frame = view.bounds
-        updateContentOffset(true)
+        updateContentOffset(false)
+        updateWelcomeLabel(dataSource.snapshot().itemIdentifiers.count > 1, isAnimated: false)
     }
 
     private func updateContentOffset(_ isAnimated: Bool) {
@@ -61,6 +80,22 @@ final class WelcomeController: UIViewController {
         let redundantHeight = view.bounds.height - requiredHeight
         let action: () -> Void = {
             self.tableView.contentInset.top = max(0, redundantHeight * 0.5)
+        }
+        if isAnimated {
+            UIView.animate(withDuration: 0.3, animations: action)
+        } else {
+            UIView.performWithoutAnimation(action)
+        }
+    }
+
+    private func updateWelcomeLabel(_ isHidden: Bool, isAnimated: Bool) {
+        let height = welcomeLabel.intrinsicContentSize.height
+        let padding: CGFloat = 24
+        let frame = CGRect(x: 0, y: isHidden ? view.bounds.height : view.bounds.height - height - padding, width: view.bounds.width, height: height)
+        let alpha: CGFloat = isHidden ? 0 : 1
+        let action: () -> Void = {
+            self.welcomeLabel.frame = frame
+            self.welcomeLabel.alpha = alpha
         }
         if isAnimated {
             UIView.animate(withDuration: 0.3, animations: action)
@@ -98,8 +133,7 @@ final class WelcomeController: UIViewController {
             super.init(style: .default, reuseIdentifier: nil)
             backgroundColor = .clear
             label.textAlignment = .center
-            let fontWeight = UIFont.Weight.bold // Figma says rawValue: 700, but that is not a valid weight..
-            label.font = .systemFont(ofSize: 34, weight: fontWeight)
+            label.font = .systemFont(ofSize: 34, weight: .bold)
             label.textColor = .white
             label.numberOfLines = 2
             let paragraphStyle = NSMutableParagraphStyle()
@@ -117,10 +151,20 @@ final class WelcomeController: UIViewController {
                 contentView.addSubview($0)
             }
             NSLayoutConstraint.activate(devicesImageConstraints + adaImageConstraints + labelConstraints)
+            setComponentsScale(0.5)
+            UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseInOut], animations: { [weak self] in
+                self?.setComponentsScale(1)
+            })
         }
 
         required init?(coder: NSCoder) { fatalError() }
-        
+
+        private func setComponentsScale(_ scale: CGFloat) {
+            [label, devicesImage, adaImage].forEach {
+                $0.transform = .init(scaleX: scale, y: scale)
+            }
+        }
+
         private var devicesImageConstraints: [NSLayoutConstraint] {
             [devicesImage.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
              devicesImage.heightAnchor.constraint(equalToConstant: 140),

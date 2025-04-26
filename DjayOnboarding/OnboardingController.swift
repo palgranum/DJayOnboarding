@@ -81,10 +81,16 @@ final public class OnboardingController: UIViewController {
 
 private extension OnboardingController {
     var buttonConstraints: [NSLayoutConstraint] {
-        [button.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
-         button.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
+        [button.widthAnchor.constraint(equalToConstant: buttonWidth),
+         button.centerXAnchor.constraint(equalTo: view.layoutMarginsGuide.centerXAnchor),
          button.bottomAnchor.constraint(equalTo: pageIndicator.topAnchor, constant: -8),
          button.heightAnchor.constraint(equalToConstant: 44)]
+    }
+
+    var buttonWidth: CGFloat {
+        // We use a fixed width based on portrait layout, otherwise the button will look weird/too wide in landscape
+        let screenWidth = UIScreen.main.nativeBounds.width / UIScreen.main.nativeScale
+        return screenWidth - view.directionalLayoutMargins.leading - view.directionalLayoutMargins.trailing
     }
 
     var pageIndicatorConstraints: [NSLayoutConstraint] {
@@ -94,8 +100,9 @@ private extension OnboardingController {
 
     var navigatorConstraints: [NSLayoutConstraint] {
         [navController.view.topAnchor.constraint(equalTo: view.topAnchor),
-         navController.view.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -8),
+         navController.view.bottomAnchor.constraint(equalTo: button.topAnchor),
          navController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
          navController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)]
     }
 }
+
