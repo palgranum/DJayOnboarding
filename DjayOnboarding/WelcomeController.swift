@@ -32,6 +32,7 @@ final class WelcomeController: UIViewController {
         super.init(nibName: nil, bundle: nil)
         view.addSubview(tableView)
         tableView.backgroundColor = .clear
+        tableView.sectionHeaderTopPadding = 0
         tableView.delegate = self
         tableView.allowsSelection = false
         self.dataSource = UITableViewDiffableDataSource<Int, WelcomeTableItem>(tableView: tableView) { tableView, indexPath, item in
@@ -61,7 +62,7 @@ final class WelcomeController: UIViewController {
         token = snapshots.sink { [weak self] in
             self?.dataSource?.apply($0, animatingDifferences: isAnimated)
             self?.updateWelcomeLabel($0.itemIdentifiers.count > 1, isAnimated: isAnimated)
-            self?.updateContentOffset(isAnimated)
+            self?.updateContentInset(isAnimated)
             isAnimated = true
         }
     }
@@ -71,15 +72,16 @@ final class WelcomeController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         tableView.frame = view.bounds
-        updateContentOffset(false)
+        updateContentInset(false)
         updateWelcomeLabel(dataSource.snapshot().itemIdentifiers.count > 1, isAnimated: false)
     }
 
-    private func updateContentOffset(_ isAnimated: Bool) {
+    private func updateContentInset(_ isAnimated: Bool) {
         let requiredHeight = dataSource.snapshot().itemIdentifiers.map(\.height).reduce(0, +)
         let redundantHeight = view.bounds.height - requiredHeight
+        let topPadding: CGFloat = max(0, redundantHeight * 0.5 - view.safeAreaInsets.top)
         let action: () -> Void = {
-            self.tableView.contentInset.top = max(0, redundantHeight * 0.5)
+            self.tableView.contentInset.top = topPadding
         }
         if isAnimated {
             UIView.animate(withDuration: 0.3, animations: action)
