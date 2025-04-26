@@ -13,6 +13,7 @@ public protocol OnboardingViewModelType {
     var pageIndex: AnyPublisher<Int, Never> { get }
     var buttonTitle: AnyPublisher<String, Never> { get }
     var isButtonEnabled: AnyPublisher<Bool, Never> { get }
+    var welcomeSnapshots: AnyPublisher<WelcomeTableSnap, Never> { get }
 }
 
 final public class OnboardingController: UIViewController {
@@ -47,9 +48,8 @@ final public class OnboardingController: UIViewController {
         view.addSubview(navController.view)
         navController.didMove(toParent: self)
         NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + navigatorConstraints)
-//        pageIndicator.addTarget(self, action: #selector(didChangePage), for: .valueChanged)
+        pageIndicator.addTarget(self, action: #selector(didChangePage), for: .valueChanged)
         viewModel.pageIndex.assign(to: \.currentPage, on: pageIndicator).store(in: &bag)
-//        viewModel.isButtonEnabled.assign(to: \.isEnabled, on: button).store(in: &bag)
         viewModel.isButtonEnabled.sink(receiveValue: { [button] in
             button.alpha = $0 ? 1 : 0.3
         }).store(in: &bag)
@@ -57,18 +57,22 @@ final public class OnboardingController: UIViewController {
             button.setTitle($0, for: .normal)
         }).store(in: &bag)
         button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
+        let controller = WelcomeController(viewModel.welcomeSnapshots)
+        navController.pushViewController(controller, animated: false)
     }
     
     required init?(coder: NSCoder) { fatalError() }
+
+    public override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
 
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         gradientLayer.frame = view.layer.bounds
     }
 
-//    @objc private func didChangePage() {
-//        print("Page changed: \(pageIndicator.currentPage)")
-//    }
+    @objc private func didChangePage() {
+        print("Page changed: \(pageIndicator.currentPage)")
+    }
 
     @objc private func didTapButton() {
         viewModel.didTapButton()

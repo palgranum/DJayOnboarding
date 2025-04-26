@@ -67,4 +67,19 @@ final class TestOnboardingViewModel: OnboardingViewModelType {
             return skill != nil
         }.eraseToAnyPublisher()
     }
+
+    var welcomeSnapshots: AnyPublisher<WelcomeTableSnap, Never> {
+        stateSubject.compactMap {
+            var snap = WelcomeTableSnap()
+            snap.appendSections([0])
+            snap.appendItems([.logo])
+            switch $0 {
+            case .welcome: return snap
+            case .mix:
+                snap.appendItems([.info])
+                return snap
+            case .skillSelection, .ready: return nil
+            }
+        }.eraseToAnyPublisher()
+    }
 }
