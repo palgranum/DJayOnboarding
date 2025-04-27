@@ -14,4 +14,6 @@ extension UIColor {
     static var gradientStart: UIColor { UIColor(red: 2.0/255.0, green: 2.0/255.0, blue: 3.0/255.0, alpha: 1) }
 
     static var gradientEnd: UIColor { UIColor(red: 80.0/255.0, green: 80.0/255.0, blue: 115.0/255.0, alpha: 1) }
+
+    static var selectionGray: UIColor { UIColor(red: 117.0/255.0, green: 117.0/255.0, blue: 131.0/255.0, alpha: 1) }
 }

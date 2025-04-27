@@ -24,7 +24,7 @@ public enum OnboardingState {
     }
 }
 
-public enum DjaySkillLevel {
+public enum DjaySkillLevel: Int {
     case beginner
     case intermediate
     case professional
@@ -68,11 +68,11 @@ final class TestOnboardingViewModel: OnboardingViewModelType {
         }.eraseToAnyPublisher()
     }
 
-    var welcomeSnapshots: AnyPublisher<WelcomeTableSnap, Never> {
+    var welcomeSnapshots: AnyPublisher<OnboardingTableSnapshot, Never> {
         stateSubject.compactMap {
-            var snap = WelcomeTableSnap()
+            var snap = OnboardingTableSnapshot()
             snap.appendSections([0])
-            snap.appendItems([.logo])
+            snap.appendItems([.djayLogo])
             switch $0 {
             case .welcome: return snap
             case .mix:
@@ -81,5 +81,31 @@ final class TestOnboardingViewModel: OnboardingViewModelType {
             case .skillSelection, .ready: return nil
             }
         }.eraseToAnyPublisher()
+    }
+
+    var screenUpdates: AnyPublisher<OnboardingTableSnapshot, Never> {
+        stateSubject.compactMap { [weak self] in
+            var snap = OnboardingTableSnapshot()
+            snap.appendSections([0])
+            switch $0 {
+            case .welcome, .mix: return nil
+            case .skillSelection:
+                guard let self else { return nil }
+                snap.appendItems([.skillSelection(self)])
+                return snap
+            case .ready: return nil
+            }
+        }.eraseToAnyPublisher()
+    }
+}
+
+extension TestOnboardingViewModel: SkillSelectionViewModelType {
+    var selectedButtonIndex: AnyPublisher<Int?, Never> {
+        skillSubject.map { $0?.rawValue }.eraseToAnyPublisher()
+    }
+
+    func didTapButton(at index: Int) {
+        guard let skill = DjaySkillLevel(rawValue: index) else { return }
+        skillSubject.send(skill)
     }
 }

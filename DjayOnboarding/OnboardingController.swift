@@ -13,22 +13,24 @@ public protocol OnboardingViewModelType {
     var pageIndex: AnyPublisher<Int, Never> { get }
     var buttonTitle: AnyPublisher<String, Never> { get }
     var isButtonEnabled: AnyPublisher<Bool, Never> { get }
-    var welcomeSnapshots: AnyPublisher<WelcomeTableSnap, Never> { get }
+    var welcomeSnapshots: AnyPublisher<OnboardingTableSnapshot, Never> { get }
+    var screenUpdates: AnyPublisher<OnboardingTableSnapshot, Never> { get }
 }
 
 final public class OnboardingController: UIViewController {
     private let button = UIButton()
     private let gradientLayer = CAGradientLayer()
     private let pageIndicator = UIPageControl()
-    private let navController = UINavigationController()
+    private let pageController = UIPageViewController(transitionStyle: .scroll,
+                                                      navigationOrientation: .horizontal)
     private let viewModel: OnboardingViewModelType
     private var bag = Set<AnyCancellable>()
 
     init(_ viewModel: OnboardingViewModelType) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        view.directionalLayoutMargins.leading = 32
-        view.directionalLayoutMargins.trailing = 32
+        view.directionalLayoutMargins.leading = Self.horizontalInset
+        view.directionalLayoutMargins.trailing = Self.horizontalInset
         gradientLayer.colors = [UIColor.gradientStart.cgColor, UIColor.gradientEnd.cgColor]
         view.layer.addSublayer(gradientLayer)
         var buttonConfig = UIButton.Configuration.filled()
@@ -39,15 +41,15 @@ final public class OnboardingController: UIViewController {
         button.configuration = buttonConfig
         view.addSubview(pageIndicator)
         pageIndicator.numberOfPages = 4
-        pageIndicator.translatesAutoresizingMaskIntoConstraints = false
-        button.translatesAutoresizingMaskIntoConstraints = false
-        navController.view.translatesAutoresizingMaskIntoConstraints = false
-        navController.isNavigationBarHidden = true
         view.addSubview(button)
-        addChild(navController)
-        view.addSubview(navController.view)
-        navController.didMove(toParent: self)
-        NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + navigatorConstraints)
+        addChild(pageController)
+        view.addSubview(pageController.view)
+        pageController.didMove(toParent: self)
+        pageController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        [button, pageIndicator, pageController.view].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+        NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + pageControllerConstraints)
         pageIndicator.addTarget(self, action: #selector(didChangePage), for: .valueChanged)
         viewModel.pageIndex.assign(to: \.currentPage, on: pageIndicator).store(in: &bag)
         viewModel.isButtonEnabled.sink(receiveValue: { [button] in
@@ -57,8 +59,12 @@ final public class OnboardingController: UIViewController {
             button.setTitle($0, for: .normal)
         }).store(in: &bag)
         button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
-        let controller = WelcomeController(viewModel.welcomeSnapshots)
-        navController.pushViewController(controller, animated: false)
+        let controller = WelcomeTableController(viewModel.welcomeSnapshots)
+        pageController.setViewControllers([controller], direction: .forward, animated: false)
+        viewModel.screenUpdates.sink(receiveValue: { [pageController] in
+            let newController = OnboardingTableController(Just($0).eraseToAnyPublisher())
+            pageController.setViewControllers([newController], direction: .forward, animated: true)
+        }).store(in: &bag)
     }
     
     required init?(coder: NSCoder) { fatalError() }
@@ -79,18 +85,21 @@ final public class OnboardingController: UIViewController {
     }
 }
 
+extension OnboardingController {
+    private static var horizontalInset: CGFloat { 32 }
+
+    static var buttonWidth: CGFloat {
+        // We use a fixed width based on portrait layout, otherwise the button will look weird/too wide in landscape
+        (UIScreen.main.nativeBounds.width / UIScreen.main.nativeScale) - 2 * horizontalInset
+    }
+}
+
 private extension OnboardingController {
     var buttonConstraints: [NSLayoutConstraint] {
-        [button.widthAnchor.constraint(equalToConstant: buttonWidth),
+        [button.widthAnchor.constraint(equalToConstant: Self.buttonWidth),
          button.centerXAnchor.constraint(equalTo: view.layoutMarginsGuide.centerXAnchor),
          button.bottomAnchor.constraint(equalTo: pageIndicator.topAnchor, constant: -8),
          button.heightAnchor.constraint(equalToConstant: 44)]
-    }
-
-    var buttonWidth: CGFloat {
-        // We use a fixed width based on portrait layout, otherwise the button will look weird/too wide in landscape
-        let screenWidth = UIScreen.main.nativeBounds.width / UIScreen.main.nativeScale
-        return screenWidth - view.directionalLayoutMargins.leading - view.directionalLayoutMargins.trailing
     }
 
     var pageIndicatorConstraints: [NSLayoutConstraint] {
@@ -98,11 +107,12 @@ private extension OnboardingController {
          pageIndicator.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor, constant: -8)]
     }
 
-    var navigatorConstraints: [NSLayoutConstraint] {
-        [navController.view.topAnchor.constraint(equalTo: view.topAnchor),
-         navController.view.bottomAnchor.constraint(equalTo: button.topAnchor),
-         navController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-         navController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)]
+    var pageControllerConstraints: [NSLayoutConstraint] {
+        [pageController.view.topAnchor.constraint(equalTo: view.topAnchor),
+         pageController.view.bottomAnchor.constraint(equalTo: button.topAnchor),
+         //pageController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+         pageController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+         pageController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)]
     }
 }
 
