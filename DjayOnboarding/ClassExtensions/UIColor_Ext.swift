@@ -7,6 +7,7 @@
 
 import UIKit
 
+/// Some colors lifted from Figma designs
 extension UIColor {
     // #3399FF
     static var buttonBlue: UIColor { UIColor(red: 0.2, green: 0.6, blue: 1.0, alpha: 1.0) }

@@ -7,7 +7,8 @@
 
 import UIKit
 import Combine
-
+ 
+/// A reusable table view controller for onboarding screens. It will center content vertically if content height is less than the screen height.
 public class OnboardingTableController: UITableViewController {
     private(set) var dataSource: UITableViewDiffableDataSource<Int, OnboardingTableItem>!
     private var token: AnyCancellable?

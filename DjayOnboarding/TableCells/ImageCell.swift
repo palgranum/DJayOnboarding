@@ -7,14 +7,14 @@
 
 import UIKit
 
+/// A simple cell that contains a centered image.
 final class ImageCell: UITableViewCell {
     private let imgView: UIImageView
     
     init(_ image: UIImage) {
         self.imgView = UIImageView(image: image)
         super.init(style: .default, reuseIdentifier: nil)
-        imgView.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(imgView)
+        contentView.addSubviewWithAutoLayout(imgView)
         backgroundColor = .clear
         NSLayoutConstraint.activate(imageConstraints)
     }

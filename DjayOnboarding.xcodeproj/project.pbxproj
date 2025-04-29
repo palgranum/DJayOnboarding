@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DEA870C92DBF5C6100250A30 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DEA870C72DBF5C6100250A30 /* AVFoundation.framework */; };
+		DEA870CA2DBF5C6100250A30 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DEA870C82DBF5C6100250A30 /* AudioToolbox.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		DE03C5A82DAFFD4A00B144CE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +32,8 @@
 		DE03C5912DAFFD4800B144CE /* DjayOnboarding.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DjayOnboarding.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE03C5A72DAFFD4A00B144CE /* DjayOnboardingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DjayOnboardingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE03C5B12DAFFD4A00B144CE /* DjayOnboardingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DjayOnboardingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DEA870C72DBF5C6100250A30 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		DEA870C82DBF5C6100250A30 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -37,6 +44,20 @@
 			);
 			target = DE03C5902DAFFD4800B144CE /* DjayOnboarding */;
 		};
+		DEA8714B2DBF646200250A30 /* Exceptions for "DjayOnboarding" folder in "DjayOnboardingTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"AudioUnit/Amen-break.wav",
+			);
+			target = DE03C5A62DAFFD4A00B144CE /* DjayOnboardingTests */;
+		};
+		DEA8714C2DBF646200250A30 /* Exceptions for "DjayOnboarding" folder in "DjayOnboardingUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"AudioUnit/Amen-break.wav",
+			);
+			target = DE03C5B02DAFFD4A00B144CE /* DjayOnboardingUITests */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,6 +65,8 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				DE03C5B92DAFFD4A00B144CE /* Exceptions for "DjayOnboarding" folder in "DjayOnboarding" target */,
+				DEA8714B2DBF646200250A30 /* Exceptions for "DjayOnboarding" folder in "DjayOnboardingTests" target */,
+				DEA8714C2DBF646200250A30 /* Exceptions for "DjayOnboarding" folder in "DjayOnboardingUITests" target */,
 			);
 			path = DjayOnboarding;
 			sourceTree = "<group>";
@@ -65,6 +88,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEA870C92DBF5C6100250A30 /* AVFoundation.framework in Frameworks */,
+				DEA870CA2DBF5C6100250A30 /* AudioToolbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,6 +116,7 @@
 				DE03C5932DAFFD4800B144CE /* DjayOnboarding */,
 				DE03C5AA2DAFFD4A00B144CE /* DjayOnboardingTests */,
 				DE03C5B42DAFFD4A00B144CE /* DjayOnboardingUITests */,
+				DEA870C62DBF5C6100250A30 /* Frameworks */,
 				DE03C5922DAFFD4800B144CE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -103,6 +129,15 @@
 				DE03C5B12DAFFD4A00B144CE /* DjayOnboardingUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		DEA870C62DBF5C6100250A30 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DEA870C82DBF5C6100250A30 /* AudioToolbox.framework */,
+				DEA870C72DBF5C6100250A30 /* AVFoundation.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -305,6 +340,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.palgranum.DjayOnboarding;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "DJayOnboarding/DJayOnboarding-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -333,6 +369,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.palgranum.DjayOnboarding;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "DJayOnboarding/DJayOnboarding-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

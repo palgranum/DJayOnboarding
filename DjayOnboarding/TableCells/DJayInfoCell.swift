@@ -7,6 +7,7 @@
 
 import UIKit
 
+/// A cell with info content, two images and the text "Mix Your Favorite Music".
 final class DJayInfoCell: UITableViewCell {
     private let devicesImage: UIImageView = UIImageView(image: UIImage(named: "devices"))
     private let adaImage: UIImageView = UIImageView(image: UIImage(named: "adaLogo"))
@@ -30,8 +31,7 @@ final class DJayInfoCell: UITableViewCell {
         )
         label.attributedText = attributedText
         [devicesImage, adaImage, label].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+            contentView.addSubviewWithAutoLayout($0)
         }
         NSLayoutConstraint.activate(devicesImageConstraints + adaImageConstraints + labelConstraints)
 

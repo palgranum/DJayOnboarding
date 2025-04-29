@@ -13,16 +13,24 @@ public protocol OnboardingViewModelType {
     var pageIndex: AnyPublisher<Int, Never> { get }
     var buttonTitle: AnyPublisher<String, Never> { get }
     var isButtonEnabled: AnyPublisher<Bool, Never> { get }
-    var welcomeSnapshots: AnyPublisher<OnboardingTableSnapshot, Never> { get }
-    var screenUpdates: AnyPublisher<OnboardingTableSnapshot, Never> { get }
+    var screenUpdates: AnyPublisher<OnboardingScreen, Never> { get }
 }
 
+public enum OnboardingScreen {
+    case welcome(AnyPublisher<OnboardingTableSnapshot, Never>)
+    case skillSelection(OnboardingTableSnapshot)
+    case congratulations(CongratulationsViewModelType)
+    case error(Error)
+}
+
+/// The main controller for the onboarding process. It contains a shared button and pageIndicator and a page view controller that will push the next screen/vc
 final public class OnboardingController: UIViewController {
     private let button = UIButton()
     private let gradientLayer = CAGradientLayer()
     private let pageIndicator = UIPageControl()
     private let pageController = UIPageViewController(transitionStyle: .scroll,
                                                       navigationOrientation: .horizontal)
+    private var pageControllerBottomConstraint: NSLayoutConstraint?
     private let viewModel: OnboardingViewModelType
     private var bag = Set<AnyCancellable>()
 
@@ -39,34 +47,28 @@ final public class OnboardingController: UIViewController {
         buttonConfig.baseForegroundColor = .white
         buttonConfig.cornerStyle = .medium
         button.configuration = buttonConfig
-        view.addSubview(pageIndicator)
+        pageIndicator.isUserInteractionEnabled = false
         pageIndicator.numberOfPages = 4
-        view.addSubview(button)
-        addChild(pageController)
-        view.addSubview(pageController.view)
-        pageController.didMove(toParent: self)
-        pageController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        [button, pageIndicator, pageController.view].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
-        NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + pageControllerConstraints)
-        pageIndicator.addTarget(self, action: #selector(didChangePage), for: .valueChanged)
         viewModel.pageIndex.assign(to: \.currentPage, on: pageIndicator).store(in: &bag)
+        addChild(pageController)
+        view.addSubviewWithAutoLayout(pageController.view)
+        pageController.didMove(toParent: self)
+        view.addSubviewWithAutoLayout(button)
+        view.addSubviewWithAutoLayout(pageIndicator)
+        NSLayoutConstraint.activate(buttonConstraints + pageIndicatorConstraints + pageControllerConstraints)
         viewModel.isButtonEnabled.sink(receiveValue: { [button] in
             button.alpha = $0 ? 1 : 0.3
+            button.isUserInteractionEnabled = $0
         }).store(in: &bag)
         viewModel.buttonTitle.sink(receiveValue: { [button] in
             button.setTitle($0, for: .normal)
         }).store(in: &bag)
         button.addTarget(self, action: #selector(didTapButton), for: .touchUpInside)
-        let controller = WelcomeTableController(viewModel.welcomeSnapshots)
-        pageController.setViewControllers([controller], direction: .forward, animated: false)
-        viewModel.screenUpdates.sink(receiveValue: { [pageController] in
-            let newController = OnboardingTableController(Just($0).eraseToAnyPublisher())
-            pageController.setViewControllers([newController], direction: .forward, animated: true)
+        viewModel.screenUpdates.sink(receiveValue: { [weak self] in
+            self?.setContentScreen($0)
         }).store(in: &bag)
     }
-    
+
     required init?(coder: NSCoder) { fatalError() }
 
     public override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
@@ -76,12 +78,33 @@ final public class OnboardingController: UIViewController {
         gradientLayer.frame = view.layer.bounds
     }
 
-    @objc private func didChangePage() {
-        print("Page changed: \(pageIndicator.currentPage)")
-    }
-
     @objc private func didTapButton() {
         viewModel.didTapButton()
+    }
+
+    private func setContentScreen(_ screen: OnboardingScreen) {
+        pageControllerBottomConstraint?.isActive = false
+        let newController: UIViewController
+        switch screen {
+        case .welcome(let snapshots):
+            newController = WelcomeTableController(snapshots)
+        case .skillSelection(let snap):
+            newController = OnboardingTableController(Just(snap).eraseToAnyPublisher())
+        case .congratulations(let viewModel):
+            newController = CongratulationsViewController(viewModel)
+        case .error(let error):
+            newController = ErrorViewController(error.localizedDescription)
+        }
+        let newConstraint: NSLayoutConstraint
+        switch screen {
+        case .congratulations:
+            newConstraint = pageController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        default:
+            newConstraint = pageController.view.bottomAnchor.constraint(equalTo: button.topAnchor)
+        }
+        newConstraint.isActive = true
+        pageControllerBottomConstraint = newConstraint
+        pageController.setViewControllers([newController], direction: .forward, animated: true)
     }
 }
 
@@ -109,8 +132,6 @@ private extension OnboardingController {
 
     var pageControllerConstraints: [NSLayoutConstraint] {
         [pageController.view.topAnchor.constraint(equalTo: view.topAnchor),
-         pageController.view.bottomAnchor.constraint(equalTo: button.topAnchor),
-         //pageController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
          pageController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
          pageController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)]
     }

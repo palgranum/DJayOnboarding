@@ -13,6 +13,7 @@ public protocol SkillSelectionViewModelType {
     func didTapButton(at index: Int)
 }
 
+/// This cell containts the UI for the skill selection screen in the onboarding process.
 final class SkillSelectionCell: UITableViewCell {
     private let icon = UIImageView(image: UIImage(named: "icon"))
     private let titleLabel = UILabel()
@@ -79,14 +80,10 @@ final class SkillSelectionCell: UITableViewCell {
                          .foregroundColor: UIColor.white.withAlphaComponent(0.6),
                          .kern: 22 * 0.02])
         [titleLabel, subtitleLabel].forEach { [labelView] in
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            labelView.addSubview($0)
+            labelView.addSubviewWithAutoLayout($0)
         }
-        labelView.addSubview(titleLabel)
-        labelView.addSubview(subtitleLabel)
         [icon, labelView, buttonStack].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview($0)
+            contentView.addSubviewWithAutoLayout($0)
         }
         NSLayoutConstraint.activate(iconConstraints
                                     + labelViewConstraints

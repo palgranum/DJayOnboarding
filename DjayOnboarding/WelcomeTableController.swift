@@ -8,6 +8,7 @@
 import UIKit
 import Combine
 
+/// The first content screen of the onboarding flow. Main content is a wrapped OnboardingTableController, and an additional animated welcome label
 final public class WelcomeTableController: UIViewController {
     private let tableController: OnboardingTableController
     private let welcomeLabel = UILabel()
