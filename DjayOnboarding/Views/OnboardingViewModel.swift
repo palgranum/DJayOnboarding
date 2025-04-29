@@ -12,20 +12,16 @@ final class OnboardingViewModel: OnboardingViewModelType {
     private let stateSubject = CurrentValueSubject<OnboardingState, Never>(.welcome)
     private let skillSubject = CurrentValueSubject<DjaySkillLevel?, Never>(nil)
 
-    private enum OnboardingState {
+    private enum OnboardingState: Int {
         case welcome
         case info
         case skillSelection
         case congratulations
+    }
 
-        var pageIndex: Int {
-            switch self {
-            case .welcome: 0
-            case .info: 1
-            case .skillSelection: 2
-            case .congratulations: 3
-            }
-        }
+    init() {
+        try? AVAudioSession.sharedInstance().setMode(.default)
+        try? AVAudioSession.sharedInstance().setCategory(.playback)
     }
 
     func didTapButton() {
@@ -45,7 +41,7 @@ final class OnboardingViewModel: OnboardingViewModelType {
     }
 
     var pageIndex: AnyPublisher<Int, Never> {
-        stateSubject.map(\.pageIndex).eraseToAnyPublisher()
+        stateSubject.map(\.rawValue).eraseToAnyPublisher()
     }
 
     var buttonTitle: AnyPublisher<String, Never> {
@@ -65,6 +61,29 @@ final class OnboardingViewModel: OnboardingViewModelType {
         }.eraseToAnyPublisher()
     }
 
+    var screenUpdates: AnyPublisher<OnboardingScreen, Never> {
+        stateSubject.compactMap { [weak self] in
+            guard let self else { return nil }
+            switch $0 {
+            case .welcome:
+                return .welcome(welcomeSnapshots)
+            case .info:
+                return nil
+            case .skillSelection:
+                let viewModel = SkillSelectionViewModel(skillSubject)
+                return .skillSelection(viewModel)
+            case .congratulations:
+                guard let skill = skillSubject.value else { return nil }
+                do {
+                    let viewModel = try CongratulationsViewModel(skill)
+                    return .congratulations(viewModel)
+                } catch {
+                    return .error(error)
+                }
+            }
+        }.eraseToAnyPublisher()
+    }
+
     private var welcomeSnapshots: AnyPublisher<OnboardingTableSnapshot, Never> {
         stateSubject.compactMap {
             var snap = OnboardingTableSnapshot()
@@ -78,41 +97,5 @@ final class OnboardingViewModel: OnboardingViewModelType {
             case .skillSelection, .congratulations: return nil
             }
         }.eraseToAnyPublisher()
-    }
-
-    var screenUpdates: AnyPublisher<OnboardingScreen, Never> {
-        stateSubject.compactMap { [weak self] in
-            guard let self else { return nil }
-            var snap = OnboardingTableSnapshot()
-            snap.appendSections([0])
-            switch $0 {
-            case .welcome:
-                return .welcome(welcomeSnapshots)
-            case .info:
-                return nil
-            case .skillSelection:
-                snap.appendItems([.skillSelection(self)])
-                return .skillSelection(snap)
-            case .congratulations:
-                guard let skill = skillSubject.value else { return nil }
-                do {
-                    let viewModel = try CongratulationsViewModel(skill)
-                    return .congratulations(viewModel)
-                } catch {
-                    return .error(error)
-                }
-            }
-        }.eraseToAnyPublisher()
-    }
-}
-
-extension OnboardingViewModel: SkillSelectionViewModelType {
-    var selectedButtonIndex: AnyPublisher<Int?, Never> {
-        skillSubject.map { $0?.rawValue }.eraseToAnyPublisher()
-    }
-
-    func didTapButton(at index: Int) {
-        guard let skill = DjaySkillLevel(rawValue: index) else { return }
-        skillSubject.send(skill)
     }
 }

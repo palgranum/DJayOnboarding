@@ -24,12 +24,10 @@ final public class WelcomeTableController: UIViewController {
         welcomeLabel.textColor = .white
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = .center
-        paragraphStyle.minimumLineHeight = 22
-        paragraphStyle.maximumLineHeight = 22
         let attributedText = NSAttributedString(
             string: "Welcome to djay!",
             attributes: [
-                .kern: 0.02 * 22, // 2% letter spacing = 0.44 points
+                .kern: 0.02 * 22,
                 .paragraphStyle: paragraphStyle
             ]
         )

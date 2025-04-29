@@ -157,6 +157,7 @@ final public class CongratulationsViewController: UIViewController {
 
         switch panGesture.state {
         case .possible: break
+
         case .began:
             viewModel.didStartPanning()
 

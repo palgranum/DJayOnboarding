@@ -18,7 +18,7 @@ public protocol OnboardingViewModelType {
 
 public enum OnboardingScreen {
     case welcome(AnyPublisher<OnboardingTableSnapshot, Never>)
-    case skillSelection(OnboardingTableSnapshot)
+    case skillSelection(SkillSelectionViewModelType)
     case congratulations(CongratulationsViewModelType)
     case error(Error)
 }
@@ -42,7 +42,6 @@ final public class OnboardingController: UIViewController {
         gradientLayer.colors = [UIColor.gradientStart.cgColor, UIColor.gradientEnd.cgColor]
         view.layer.addSublayer(gradientLayer)
         var buttonConfig = UIButton.Configuration.filled()
-        buttonConfig.title = "Continue"
         buttonConfig.baseBackgroundColor = .buttonBlue
         buttonConfig.baseForegroundColor = .white
         buttonConfig.cornerStyle = .medium
@@ -88,7 +87,10 @@ final public class OnboardingController: UIViewController {
         switch screen {
         case .welcome(let snapshots):
             newController = WelcomeTableController(snapshots)
-        case .skillSelection(let snap):
+        case .skillSelection(let viewModel):
+            var snap = OnboardingTableSnapshot()
+            snap.appendSections([0])
+            snap.appendItems([.skillSelection(viewModel)], toSection: 0)
             newController = OnboardingTableController(Just(snap).eraseToAnyPublisher())
         case .congratulations(let viewModel):
             newController = CongratulationsViewController(viewModel)
